@@ -1,0 +1,135 @@
+/* --- Global layout --- */
+
+body.home-page {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #f3f5f8;
+    color: #222;
+  }
+  
+  .page-container {
+    max-width: 960px;
+    margin: 24px auto 40px;
+    padding: 0 16px;
+  }
+  
+  /* --- Header --- */
+  
+  .page-header {
+    margin-bottom: 12px;
+  }
+  
+  .page-title {
+    margin: 0;
+    font-size: 1.8rem;
+  }
+  
+  .page-subtitle {
+    margin: 4px 0 0;
+    color: #555;
+    font-size: 0.95rem;
+  }
+  
+  /* --- Panel (card around the map) --- */
+  
+  .panel {
+    margin-top: 16px;
+    padding: 12px 16px 16px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+  }
+  
+  .panel-title {
+    margin: 0 0 8px;
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+  
+  /* --- Map wrapper --- */
+  
+  .map-wrapper {
+    position: relative;
+  }
+  
+  #map {
+    height: 520px;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  /* --- Legend --- */
+  
+  .map-legend {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.18);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-size: 0.85rem;
+  }
+  
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+  
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    border: 1px solid #fff;
+    box-shadow: 0 0 1px rgba(0,0,0,0.5);
+  }
+  
+  .legend-dot--tidal {
+    background: #1e90ff; /* blue */
+  }
+  
+  .legend-dot--fresh {
+    background: #2ecc71; /* green */
+  }
+  
+  /* --- Custom Leaflet CSS markers (pins) --- */
+  
+  .pin {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 2px rgba(0,0,0,.6);
+  }
+  
+  .pin--tidal {
+    background: #1e90ff;
+  }
+  
+  .pin--fresh {
+    background: #2ecc71;
+  }
+  
+  /* --- Responsive tweaks --- */
+  
+  @media (max-width: 640px) {
+    .page-container {
+      padding: 0 12px;
+    }
+  
+    #map {
+      height: 360px;
+    }
+  
+    .map-legend {
+      left: 8px;
+      bottom: 8px;
+      padding: 4px 8px;
+      font-size: 0.8rem;
+    }
+  }

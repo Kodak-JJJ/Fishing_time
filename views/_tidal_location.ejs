@@ -1,0 +1,196 @@
+<%
+  rootPath = '../views';
+  location_id = location.location_id;
+  function getFormat(date){
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hour = String(date.getHours()).padStart(2, '0');
+    const minute = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hour}:${minute}`;
+  }
+
+  const today = new Date();
+  const formatted = getFormat(today); // today
+  const formattedYesterday = getFormat(new Date(Date.now() - 24*60*60*1000));
+  const todayMinus30 = new Date(Date.now() - 30*24*60*60*1000);
+  const formattedM30 = getFormat(todayMinus30);  // today - 30
+  const todayPlus30 = new Date(Date.now() + 30*24*60*60*1000);
+  const formattedP30 = getFormat(todayPlus30); // today + 30
+%>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="/css/locationPage.css" type="text/css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= location.name %> - Fishing time</title>
+</head>
+
+<body class="page">
+  <header class="page-header">
+    <h2 class="back-link">
+      <a href="/home_page">Back to Home page</a>
+    </h2>
+    <h1>Real-time Tidal Water Information</h1>
+    <h2 class="location-subtitle"><%= location.name %></h2>
+  </header>
+
+  <main class="content">
+    <form id="queryForm" class="query-form">
+      <label for="data_type">Data type:</label>
+      <select id="data_type" name="data_type" required>
+        <option value="">--Choose--</option>
+        <option value="wlp">Water level predictions</option>
+        <option value="wlo">Water level observations</option>
+      </select>
+      <label for="start_date">Date range:</label>
+      <div class="date-range">
+        <input
+          type="datetime-local"
+          id="start_date"
+          name="start_date"
+          required
+          value="<%= formattedYesterday %>"
+          min="<%= formattedM30 %>"
+          max="<%= formatted %>"
+        >
+        <span class="date-range-separator">→</span>
+        <input
+          type="datetime-local"
+          id="end_date"
+          name="end_date"
+          required
+          value="<%= formatted %>"
+          min="<%= formattedM30 %>"
+          max="<%= formatted %>"
+        >
+      </div>
+      <button type="submit" class="btn-primary">Load data</button>
+    </form>
+
+        <!-- Chart panel -->
+        <section class="panel">
+          <h3 class="panel-title">Water Level Chart</h3>
+          <div class="chart-wrapper">
+            <canvas id="chart"></canvas>
+          </div>
+        </section>
+    
+        <!-- Table panel -->
+        <section class="panel">
+          <h3 class="panel-title">Data Table</h3>
+          <div class="table-scroll-wrapper">
+            <table id="levels" class="data-table">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Water level (m)</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+  </main>
+
+
+  <!-- Chart.js + date adapter -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+  <!-- embed loc json -->
+  <script id="location-json" type="application/json">
+    <%- JSON.stringify(location).replace(/</g, '\\u003c') %>
+  </script>
+
+  <script type="module">
+    import {
+      toPointsIwls,
+      renderTableFromPoints,
+      drawLineChart,
+      buildUtcRange,
+      readEmbeddedJson,
+      clampDatetimeInputRange,
+      qs
+    } from '/js/utils.js';
+
+    const loc = readEmbeddedJson('location-json');
+    const dataTypeSelect = document.getElementById("data_type");
+    const startDateInput = document.getElementById("start_date");
+    const endDateInput   = document.getElementById("end_date");
+
+    // Common min value
+    const COM_MIN  = "<%= formattedM30 %>";
+    // Observation range: last 30 days
+    const OBS_MAX  = "<%= formatted %>";
+    // Prediction range: last 30days → + 30 days
+    const PRED_MAX = "<%= formattedP30 %>";
+
+    function applyDateRange() {
+      const isPred = dataTypeSelect.value === 'wlp';
+      const max = isPred ? PRED_MAX : OBS_MAX;
+
+      clampDatetimeInputRange(startDateInput, endDateInput, {
+        min: COM_MIN,
+        max
+      });
+    }
+
+    dataTypeSelect.addEventListener("change", applyDateRange);
+    applyDateRange(); // init
+
+    let chart; // keep reference to destroy when re-plotting
+
+    document.getElementById('queryForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const fd = new FormData(e.target);
+      const dataType  = fd.get('data_type');     // "wlp" | "wlo"
+      const start     = fd.get('start_date');    // "YYYY-MM-DDTHH:MM"
+      const end       = fd.get('end_date');
+
+      if (!dataType) { alert('Choose a data type'); return; }
+      if (start > end) { alert('Start must be <= End'); return; }
+
+      // Build IWLS params
+      const paramsObj = {
+        'time-series-code': dataType,
+        from: buildUtcRange(start, start).slice(0, 20) + 'Z', // not used: we’ll pass full range below
+        to:   buildUtcRange(end,   end).slice(21),            // not used
+        resolution: 'FIFTEEN_MINUTES'
+      };
+
+      // IWLS expects separate from/to (UTC). Use buildUtcRange to get each:
+      const [fromStr, toStr] = buildUtcRange(start, end).split('/');
+      paramsObj.from = fromStr;
+      paramsObj.to   = toStr;
+
+      const url = `/tidal_location/stations/${encodeURIComponent(loc.station_id)}/data?` + qs(paramsObj);
+      try {
+        const res = await fetch(url);
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`Request failed: ${res.status} ${text}`);
+        }
+        const json = await res.json();
+
+        // Map IWLS payload to {x,y}
+        const points = toPointsIwls(json);
+
+        // Table + chart
+        renderTableFromPoints(points, { zone: 'America/Vancouver', target: '#levels tbody' });
+        if (!points.length) {
+          alert('No plottable points in response.');
+          return;
+        }
+        drawLineChart(document.getElementById('chart'), points, `Station ${loc.name} — ${start} … ${end}`);
+      } catch (err) {
+        console.error(err);
+        alert(String(err));
+      }
+    });
+  </script>
+</body>
+</html>

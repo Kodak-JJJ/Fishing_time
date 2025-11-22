@@ -1,0 +1,115 @@
+<%
+page_name = 'home_page';
+rootPath = '../views';
+%>
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Fishing spots</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+  <!-- Your page CSS -->
+  <link rel="stylesheet" href="/css/homePage.css" type="text/css">
+</head>
+<body class="home-page">
+  <div class="page-container">
+    <header class="page-header">
+      <h1 class="page-title">Fishing spots</h1>
+      <p class="page-subtitle">Click a pin to open its water level page.</p>
+    </header>
+
+    <section class="panel">
+      <h2 class="panel-title">Map</h2>
+      <div class="map-wrapper">
+        <div id="map"></div>
+
+        <div class="map-legend">
+          <span class="legend-item">
+            <span class="legend-dot legend-dot--tidal"></span>
+            Tidal spots
+          </span>
+          <span class="legend-item">
+            <span class="legend-dot legend-dot--fresh"></span>
+            River spots
+          </span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Embed DB rows as JSON -->
+  <script id="tidal_rows-json" type="application/json">
+    <%- JSON.stringify(tidal_location_data).replace(/</g, '\\u003c') %>
+  </script>
+  <script id="river_rows-json" type="application/json">
+    <%- JSON.stringify(river_location_data).replace(/</g, '\\u003c') %>
+  </script>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const tidal_rows = JSON.parse(document.getElementById('tidal_rows-json').textContent);
+    const fresh_rows = JSON.parse(document.getElementById('river_rows-json').textContent);
+
+    // CSS markers
+    const iconFor = (kind) => L.divIcon({
+      className: `pin ${kind === 'fresh' ? 'pin--fresh' : 'pin--tidal'}`,
+      iconSize: [14,14],
+      iconAnchor: [7,7],
+      popupAnchor: [0,-8]
+    });
+
+    const tidal_places = tidal_rows.map(r => ({
+      name: r.name,
+      lat: r.lat,
+      lng: r.lng,
+      type: 'tidal',
+      url: `/tidal_location/${encodeURIComponent(r.name)}`
+    }));
+
+    const fresh_places = fresh_rows.map(r => ({
+      name: r.name,
+      lat: r.lat,
+      lng: r.lng,
+      type: 'fresh',
+      url: `/river_location/${encodeURIComponent(r.name)}`
+    }));
+
+    const map = L.map('map').setView([49.2827, -123.1207], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const group = L.featureGroup().addTo(map);
+
+    tidal_places.forEach(p => {
+      const m = L.marker([p.lat, p.lng], {
+        title: p.name,
+        icon: iconFor(p.type)
+      }).addTo(group);
+      m.on('click', () => { window.location.href = p.url; });
+      m.bindPopup(`<strong>${p.name}</strong><br><a href="${p.url}">Open page</a>`);
+      m.bindTooltip(p.name);
+    });
+
+    fresh_places.forEach(p => {
+      const m = L.marker([p.lat, p.lng], {
+        title: p.name,
+        icon: iconFor(p.type)
+      }).addTo(group);
+      m.on('click', () => { window.location.href = p.url; });
+      m.bindPopup(`<strong>${p.name}</strong><br><a href="${p.url}">Open page</a>`);
+      m.bindTooltip(p.name);
+    });
+
+    if (group.getLayers().length) {
+      map.fitBounds(group.getBounds(), { padding: [40, 40] });
+    }
+  </script>
+</body>
+</html>

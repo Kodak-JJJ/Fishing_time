@@ -1,0 +1,21 @@
+{
+  "name": "fishing-time",
+  "version": "1.0.0",
+  "description": "Shows fishermen in Metro Vancouver the best fishing dates and times at Ambleside Beach in the near future.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.12.2",
+    "cheerio": "^1.1.2",
+    "cookie-parser": "^1.4.7",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "morgan": "^1.10.1",
+    "mysql2": "^3.15.0"
+  }
+}

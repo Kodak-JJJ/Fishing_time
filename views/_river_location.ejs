@@ -1,0 +1,154 @@
+<%
+  rootPath = '../views';
+  location_id = location.location_id;
+
+  function getFormat(date){
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hour = String(date.getHours()).padStart(2, '0');
+    const minute = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hour}:${minute}`;
+  }
+
+  const today = new Date();
+  const formatted = getFormat(today);
+  const formattedYesterday = getFormat(new Date(Date.now() - 24*60*60*1000));
+  const formattedM30 = getFormat(new Date(Date.now() - 30*24*60*60*1000));
+%>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="/css/locationPage.css" type="text/css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= location.name %> - Fishing time</title>
+</head>
+<body class="page">
+  <header class="page-header">
+    <h2 class="back-link">
+      <a href="/home_page">Back to Home page</a>
+    </h2>
+    <h1>Real-time Water Level observation</h1>
+    <h2 class="location-subtitle"><%= location.name %> River</h2>
+  </header>
+
+  <main class="content">
+    <form id="queryForm" class="query-form">
+      <label for="start_date">Date range:</label>
+      <div class="date-range">
+        <input type="datetime-local" id="start_date" name="start_date"
+               required value="<%= formattedYesterday %>"
+               min="<%= formattedM30 %>" max="<%= formatted %>">
+        <span class="date-range-separator">→</span>
+        <input type="datetime-local" id="end_date" name="end_date"
+               required value="<%= formatted %>"
+               min="<%= formattedM30 %>" max="<%= formatted %>">
+      </div>
+      <button type="submit" class="btn-primary">Load data</button>
+    </form>
+
+    <section class="panel">
+      <h3 class="panel-title">Water Level Chart</h3>
+      <div class="chart-wrapper">
+        <canvas id="chart"></canvas>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3 class="panel-title">Data Table</h3>
+      <div class="table-scroll-wrapper">
+        <table id="levels" class="data-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Water level (m)</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- <section class="panel">
+      <h3 class="panel-title">Debug output</h3>
+      <pre id="out" class="debug-output"></pre>
+    </section> -->
+  </main>
+
+
+
+
+  <!-- Chart.js + adapter -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+  <!-- Embed location row -->
+  <script id="location-json" type="application/json">
+    <%- JSON.stringify(location).replace(/</g, '\\u003c') %>
+  </script>
+
+  <!-- Use shared utils -->
+  <script type="module">
+    import {
+      toPointsHydrometric,
+      renderTableFromPoints,
+      drawLineChart,
+      buildUtcRange,
+      readEmbeddedJson,
+      clampDatetimeInputRange,
+      qs
+    } from '/js/utils.js';
+
+    const loc = readEmbeddedJson('location-json');
+    // const outEl = document.getElementById('out');
+    const startEl = document.getElementById('start_date');
+    const endEl = document.getElementById('end_date');
+
+    // Optional: clamp inputs on load
+
+    clampDatetimeInputRange(startEl, endEl, {
+      min: startEl.min,
+      max: endEl.max,
+    });
+
+
+    document.getElementById('queryForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      // if (outEl) outEl.textContent = '';
+
+      const dateTime  = (new Date(startEl.value)).toISOString() +'/' + (new Date(endEl.value)).toISOString();
+
+  
+
+      const query = qs({
+        STATION_NUMBER: loc.station_id,
+        datetime: dateTime,
+        sortby: 'DATETIME',
+        limit: '5000'
+      });
+
+      const url = `/river_location/api/items?${query}`;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Request failed: ${res.status} ${await res.text()}`);
+        const json = await res.json();
+
+        const points = toPointsHydrometric(json, 'LEVEL');
+        renderTableFromPoints(points, { zone: 'America/Vancouver', decimals: 2, target: '#levels tbody' });
+
+        drawLineChart('chart', points, `Station ${loc.name} — ${startEl.value} → ${endEl.value}`);
+        if (!points.length) {
+          // if (outEl) outEl.textContent = 'No plottable points in response.';
+          return;
+        }
+        
+      } catch (err) {
+        // if (outEl) outEl.textContent = String(err);
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
