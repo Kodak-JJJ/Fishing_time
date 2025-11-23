@@ -28,30 +28,30 @@ app.get('/', (req, res) => {
   res.send('OK - app is running');
 });
 
-// Your main routes
-app.use('/home_page', homepageRouter);
-app.use('/tidal_location', tidalLocationRouter);
-app.use('/river_location', riverLocationRouter);
+// // Your main routes
+// app.use('/home_page', homepageRouter);
+// app.use('/tidal_location', tidalLocationRouter);
+// app.use('/river_location', riverLocationRouter);
 
-// 404 handler (optional)
-app.use((req, res, next) => {
-  next(createError(404));
-});
+// // 404 handler (optional)
+// app.use((req, res, next) => {
+//   next(createError(404));
+// });
 
-// Error handler
-app.use((err, req, res, next) => {
-  console.error(err);
+// // Error handler
+// app.use((err, req, res, next) => {
+//   console.error(err);
 
-  if (res.headersSent) return next(err);
+//   if (res.headersSent) return next(err);
 
-  if (req.accepts('html')) {
-    res.status(err.status || 500).send(
-      `<h1>Server Error</h1><pre>${err.message}</pre>`
-    );
-  } else {
-    res.status(err.status || 500).json({ error: err.message });
-  }
-});
+//   if (req.accepts('html')) {
+//     res.status(err.status || 500).send(
+//       `<h1>Server Error</h1><pre>${err.message}</pre>`
+//     );
+//   } else {
+//     res.status(err.status || 500).json({ error: err.message });
+//   }
+// });
 
 // Start server
 app.listen(PORT, () => {
