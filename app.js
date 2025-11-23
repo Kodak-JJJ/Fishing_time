@@ -7,7 +7,7 @@ const logger = require('morgan');
 // Route modules
 const homepageRouter = require('./routes/home_page');
 const tidalLocationRouter = require('./routes/tidal_location');
-const riverLocationRouter = require('./routes/river_location');
+const riverLocationRouter = require('./routes/fresh_location');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
