@@ -9,6 +9,10 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.get('/', (req, res) => {
+  res.send('OK - app is running');
+});
+
 app.use('/home_page', homepageRouter);
 app.use('/tidal_location', tidalLocationRouter);
 app.use('/river_location', freshLocationRouter);
