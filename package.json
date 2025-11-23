@@ -4,7 +4,7 @@
   "description": "Shows fishermen in Metro Vancouver the best fishing dates and times at Ambleside Beach in the near future.",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app.js"
   },
   "keywords": [],
