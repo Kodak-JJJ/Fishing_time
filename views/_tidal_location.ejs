@@ -151,6 +151,10 @@
       const start     = fd.get('start_date');    // "YYYY-MM-DDTHH:MM"
       const end       = fd.get('end_date');
 
+      //testing
+      console.log("startdate >>> "+start);
+      console.log("enddate >>> "+end);
+
       if (!dataType) { alert('Choose a data type'); return; }
       if (start > end) { alert('Start must be <= End'); return; }
 
