@@ -1,27 +1,27 @@
-const createError = require('http-errors');
+// const createError = require('http-errors');
 const express = require('express');
-const path = require('path');
-const cookieParser = require('cookie-parser');
-const logger = require('morgan');
+// const path = require('path');
+// const cookieParser = require('cookie-parser');
+// const logger = require('morgan');
 
-// Route modules
-const homepageRouter = require('./routes/home_page');
-const tidalLocationRouter = require('./routes/tidal_location');
-const riverLocationRouter = require('./routes/fresh_location');
+// // Route modules
+// const homepageRouter = require('./routes/home_page');
+// const tidalLocationRouter = require('./routes/tidal_location');
+// const riverLocationRouter = require('./routes/fresh_location');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// View engine setup
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+// // View engine setup
+// app.set('view engine', 'ejs');
+// app.set('views', path.join(__dirname, 'views'));
 
-// Middleware
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+// // Middleware
+// app.use(logger('dev'));
+// app.use(express.json());
+// app.use(express.urlencoded({ extended: false }));
+// app.use(cookieParser());
+// app.use(express.static(path.join(__dirname, 'public')));
 
 // Simple health check for Railway and local root
 app.get('/', (req, res) => {
