@@ -25,9 +25,6 @@ A web app that helps anglers check real-time and tidal water levels for my favou
 - **Database:** MySQL (for storing station locations)
 - **Other:** date-fns (via Chart.js adapter), CSS layout, ES modules
 
-## Running locally
+## Running Publically on Railway
 
-```bash
-git clone https://github.com/<your-username>/Fishing_time.git
-cd Fishing_time
-npm install
+https://fishingtime-production.up.railway.app/home_page
